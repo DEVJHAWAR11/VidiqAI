@@ -4,3 +4,4 @@ python-dotenv
 langchain
 youtube-transcript-api
 chromadb
+pydantic

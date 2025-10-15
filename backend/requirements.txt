@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+python-dotenv
+langchain
+youtube-transcript-api
+chromadb

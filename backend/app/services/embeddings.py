@@ -1,5 +1,9 @@
 from app.config import config
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings  # Updated import
 
 def get_embeddings():
-    return OpenAIEmbeddings(openai_api_key=config.OPENAI_API_KEY)
+    """Return OpenAI embeddings model."""
+    return OpenAIEmbeddings(
+        openai_api_key=config.OPENAI_API_KEY,
+        model=config.OPENAI_EMBEDDING_MODEL  # Now configurable
+    )

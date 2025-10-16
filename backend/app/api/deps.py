@@ -1,15 +1,23 @@
-from langchain_openai import ChatOpenAI  # Updated import for newer LangChain
+from langchain_groq import ChatGroq
+from langchain_openai import ChatOpenAI
 from app.config import config
 from app.storage.vector_store import get_vectorstore
 from app.services.qa_chain import create_qa_chain
 
 def get_llm():
-    """Return OpenAI chat model with specified model."""
-    return ChatOpenAI(
-        openai_api_key=config.OPENAI_API_KEY,
-        model_name=config.OPENAI_MODEL,  # Now uses config
-        temperature=0,  # 0 = deterministic, 1 = creative
-    )
+    """Return LLM based on provider setting."""
+    if config.LLM_PROVIDER == "groq":
+        return ChatGroq(
+            groq_api_key=config.GROQ_API_KEY,
+            model_name=config.GROQ_MODEL,
+            temperature=0
+        )
+    else:  # openai
+        return ChatOpenAI(
+            openai_api_key=config.OPENAI_API_KEY,
+            model_name=config.OPENAI_MODEL,
+            temperature=0
+        )
 
 # Initialize once when app starts
 llm = get_llm()

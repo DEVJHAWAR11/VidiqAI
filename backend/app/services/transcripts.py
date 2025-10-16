@@ -1,78 +1,66 @@
 import os
-from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound
+from youtube_transcript_api import YouTubeTranscriptApi
 from app.storage.cache import save_transcript, load_transcript
 from app.storage.vector_store import add_to_vectorstore
 from app.services.processing import chunk_text, clean_text
 
+
 class TranscriptError(Exception):
-    """Custom exception for transcript-related errors"""
+    """Custom exception for transcript errors"""
     pass
 
+
 def get_transcript(video_id: str, video_url: str = None):
-    """
-    Fetch transcript by video ID, using cache if available.
-    
-    Args:
-        video_id: YouTube video ID
-        video_url: Optional full URL for reference
-        
-    Returns:
-        Transcript text as string
-        
-    Raises:
-        TranscriptError: If transcript unavailable or video doesn't exist
-    """
+    """Fetch transcript by video ID, using cache if available."""
     # Check cache first
     cached = load_transcript(video_id)
     if cached:
-        print(f"✓ Loaded transcript from cache for video: {video_id}")
+        print(f"✓ Using cached transcript for: {video_id}")
         return cached
     
     try:
-        # Fetch from YouTube
-        transcript_data = YouTubeTranscriptApi.get_transcript(video_id)
+        # NEW API (v1.2.0+): Create instance and use .fetch()
+        ytt_api = YouTubeTranscriptApi()
+        fetched_transcript = ytt_api.fetch(video_id)
+        
+        # Convert to raw data (list of dicts)
+        transcript_data = fetched_transcript.to_raw_data()
+        
+        # Extract text from transcript entries
         transcript_text = " ".join([entry['text'] for entry in transcript_data])
         
         # Save to cache
         save_transcript(video_id, transcript_text)
-        print(f"✓ Fetched and cached transcript for video: {video_id}")
+        print(f"✓ Downloaded and cached transcript for: {video_id}")
         
         return transcript_text
         
-    except TranscriptsDisabled:
-        raise TranscriptError(f"Transcripts are disabled for video: {video_id}")
-    except NoTranscriptFound:
-        raise TranscriptError(f"No transcript found for video: {video_id}")
     except Exception as e:
-        raise TranscriptError(f"Error fetching transcript: {str(e)}")
+        # Provide helpful error message
+        raise TranscriptError(f"Could not fetch transcript for video {video_id}: {str(e)}")
+
 
 def process_video(video_id: str, video_url: str = None) -> dict:
     """
-    Complete video processing pipeline:
-    1. Fetch transcript (from cache or YouTube)
-    2. Clean and chunk the text
-    3. Embed chunks into vector store
-    
-    Args:
-        video_id: YouTube video ID
-        video_url: Optional full URL
-        
-    Returns:
-        Dictionary with processing stats
+    Complete processing pipeline:
+    1. Get transcript (cached or fresh)
+    2. Clean text
+    3. Chunk into smaller pieces
+    4. Embed and store in vector database
     """
     # Step 1: Get transcript
     transcript = get_transcript(video_id, video_url)
     
-    # Step 2: Clean the transcript
-    cleaned_transcript = clean_text(transcript)
+    # Step 2: Clean text
+    cleaned = clean_text(transcript)
     
     # Step 3: Chunk into smaller pieces
-    chunks = chunk_text(cleaned_transcript, chunk_size=500)
+    chunks = chunk_text(cleaned, chunk_size=500)
     
-    # Step 4: Add to vector store for retrieval
+    # Step 4: Store in FAISS vector DB
     add_to_vectorstore(chunks)
     
-    print(f"✓ Processed {len(chunks)} chunks for video: {video_id}")
+    print(f"✓ Processed {len(chunks)} chunks into vector store")
     
     return {
         "video_id": video_id,
@@ -82,9 +70,7 @@ def process_video(video_id: str, video_url: str = None) -> dict:
         "status": "success"
     }
 
+
 def split_transcript(text: str, chunk_size: int = 1000):
-    """Split long transcript into smaller chunks"""
+    """Split transcript into chunks"""
     return [text[i:i + chunk_size] for i in range(0, len(text), chunk_size)]
-
-
-

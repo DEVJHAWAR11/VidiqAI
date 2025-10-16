@@ -2,18 +2,22 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # LLM Configuration
-    LLM_PROVIDER: str
-    OPENAI_API_KEY: str
+    LLM_PROVIDER: str = "groq"  # Default to Groq
     
-    # Model Selection - NEW!
-    OPENAI_MODEL: str = "gpt-4o-mini"  # Default model
-    OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"  # Default embeddings
+    # Groq Settings (Best free option)
+    GROQ_API_KEY: str
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"  # GPT-4 level quality
     
-    # Storage
+    # OpenAI (Backup - if you add credits later)
+    OPENAI_API_KEY: str = ""
+    OPENAI_MODEL: str = "gpt-4o-mini"
+    OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
+    
+    # Storage Paths
     CHROMA_DB_PATH: str
     CACHE_PATH: str
     
-    # Server
+    # Server Configuration
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8000
     LOG_LEVEL: str = "INFO"
@@ -24,5 +28,5 @@ class Settings(BaseSettings):
 config = Settings()
 
 # Validation
-if config.LLM_PROVIDER == 'openai' and not config.OPENAI_API_KEY:
-    raise ValueError("OPENAI_API_KEY is required when using OpenAI")
+if config.LLM_PROVIDER == 'groq' and not config.GROQ_API_KEY:
+    raise ValueError("GROQ_API_KEY is required when using Groq")

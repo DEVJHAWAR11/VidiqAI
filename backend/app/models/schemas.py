@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 import re
 
@@ -6,7 +6,7 @@ class ProcessVideoRequest(BaseModel):
     """Request model for processing a video"""
     video_url: str = Field(..., description="YouTube video URL or video ID")
     
-    @validator('video_url')
+    @field_validator('video_url')
     def validate_video_url(cls, v):
         """Ensure it's a valid YouTube URL or video ID"""
         if not v:

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
+from app.api import endpoints
+app=FastAPI(title='vidiqAI')
 
-from app.config import config
+app.include_router(endpoints.router)
 
-print(config.APP_HOST)
-print(config.CHROMA_DB_PATH)

@@ -1,12 +1,14 @@
+from langchain.chat_models import ChatOpenAI
 from app.config import config
-from app.services.embeddings import get_embeddings
+from app.storage.vector_store import get_vectorstore
 from app.services.qa_chain import create_qa_chain
-from storage.vector_store import get_vectorstore
-from langchain.chat_models import openai
 
-llm=openai(openai_api_key=config.OPENAI_API_KEY,temperature=0)
+# Initialize core dependencies
+def get_llm():
+    """Return OpenAI chat model."""
+    return ChatOpenAI(openai_api_key=config.OPENAI_API_KEY, temperature=0)
 
-vectorstore=get_vectorstore()
-
-qa_chain=create_qa_chain(llm,vectorstore)
+llm = get_llm()
+vectorstore = get_vectorstore()
+qa_chain = create_qa_chain(llm, vectorstore)
 

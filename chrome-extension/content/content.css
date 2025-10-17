@@ -1,0 +1,10 @@
+/* chrome-extension/content/content.css */
+#vidiqai-sidebar {
+  box-shadow: 0 0 16px rgba(0,0,0,0.2);
+  border-radius: 0 0 0 12px;
+  background: #fff;
+}
+
+#vidiqai-sidebar-btn:hover {
+  background: #4f46e5;
+}

@@ -46,10 +46,13 @@ def transcribe_with_groq(audio_path: str) -> str:
     logger.info("✓ Groq transcription complete")
     return transcription
 
-def transcribe_with_local_whisper(audio_path: str, model_size="base") -> str:
+import whisper
+
+def transcribe_with_local_whisper(audio_path, model_size="base"):
     model = whisper.load_model(model_size)
-    result = model.transcribe(audio_path)
-    logger.info("✓ Local Whisper transcription complete")
+    # Force English translation for non-English audio
+    result = model.transcribe(audio_path, task="translate")
+    print("[DEBUG] Whisper transcript after translation:", result["text"][:200])
     return result["text"]
 
 def get_transcript(video_id: str, video_url: str = None):
@@ -109,13 +112,22 @@ def get_transcript(video_id: str, video_url: str = None):
             "This may be a platform restriction or severe audio download error. Contact admin if this is unexpected."
         )
 
+# In transcripts.py, modify the process_video function:
+
+# In transcripts.py, modify the process_video function:
+
 def process_video(video_id: str, video_url: str = None) -> dict:
     logger.info(f"Starting video processing for: {video_id}")
+    
     transcript = get_transcript(video_id, video_url)
     cleaned = clean_text(transcript)
     chunks = chunk_text(cleaned, chunk_size=500)
-    add_to_vectorstore(chunks)
-    logger.info(f"✓ Processed {len(chunks)} chunks into vector store")
+    
+    # FIXED: Pass video_id to store in video-specific index
+    add_to_vectorstore(chunks, video_id=video_id)
+    
+    logger.info(f"✓ Processed {len(chunks)} chunks into video-specific vector store")
+    
     return {
         "video_id": video_id,
         "video_url": video_url or f"https://www.youtube.com/watch?v={video_id}",
@@ -123,3 +135,4 @@ def process_video(video_id: str, video_url: str = None) -> dict:
         "chunks_created": len(chunks),
         "status": "success"
     }
+

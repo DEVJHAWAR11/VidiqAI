@@ -7,7 +7,9 @@ app.log
 *.log
 
 # Caches and outputs
-/data/*
+/data/cache/*
+/data/audio/*
+/data/faiss/*
 *.db
 
 # Whisper temp files and downloads

@@ -1,0 +1,25 @@
+<!-- chrome-extension/sidebar/sidebar.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VidIQAI Chatbot</title>
+  <link rel="stylesheet" href="sidebar.css" />
+</head>
+<body>
+  <div id="sidebar-root">
+    <header>
+      <img src="../icons/icon48.png" alt="VidIQAI" class="logo"/>
+      <span class="title">VidIQAI Chatbot</span>
+    </header>
+    <div id="transcript-status" class="status">Checking transcript...</div>
+    <div id="chat-container"></div>
+    <form id="chat-form">
+      <input type="text" id="chat-input" placeholder="Ask about this video..." autocomplete="off" required />
+      <button type="submit">Send</button>
+    </form>
+  </div>
+  <script src="sidebar.js"></script>
+</body>
+</html>

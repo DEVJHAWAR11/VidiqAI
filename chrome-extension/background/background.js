@@ -180,3 +180,97 @@ chrome.runtime.onConnect.addListener((port) => {
 });
 
 console.log('🚀 VidIQAI Background Service Worker Started');
+
+
+
+// for chat streaming
+
+async function askQuestionStream(videoId, question, onChunk) {
+  const settings = await chrome.storage.sync.get(['apiUrl']);
+  const apiUrl = settings.apiUrl || CONFIG.API_BASE_URL;
+
+  const response = await fetch(`${apiUrl}/ask/stream`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ video_id: videoId, question })
+  });
+
+  if (!response.body) throw new Error("No response body for streaming");
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let done = false;
+  let buffer = "";
+
+  while (!done) {
+    const { value, done: doneReading } = await reader.read();
+    done = doneReading;
+    buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+
+    // Split on SSE event boundaries
+    const events = buffer.split("\n\n");
+    buffer = events.pop(); // Last incomplete event stays in buffer
+
+    for (const event of events) {
+      if (event.startsWith("data: ")) {
+        const chunk = event.replace("data: ", "");
+        if (chunk === "[END]") return;
+        onChunk(chunk);
+      }
+    }
+  }
+}
+
+// Add this function to background/background.js
+async function askQuestionStream(videoId, question, onChunk) {
+  const settings = await chrome.storage.sync.get(['apiUrl']);
+  const apiUrl = settings.apiUrl || 'http://localhost:8000/api/v1';
+
+  const response = await fetch(`${apiUrl}/ask/stream`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ video_id: videoId, question })
+  });
+
+  if (!response.body) throw new Error("No response body for streaming");
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let done = false;
+  let buffer = "";
+
+  while (!done) {
+    const { value, done: doneReading } = await reader.read();
+    done = doneReading;
+    buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+
+    // Split on SSE event boundaries
+    const events = buffer.split("\n\n");
+    buffer = events.pop(); // Last incomplete event stays in buffer
+
+    for (const event of events) {
+      if (event.startsWith("data: ")) {
+        const chunk = event.replace("data: ", "");
+        if (chunk === "[END]") return;
+        onChunk(chunk);
+      }
+    }
+  }
+}
+
+// Update your message handler in background/background.js
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.type === 'ASK_QUESTION_STREAM') {
+    askQuestionStream(request.videoId, request.question, (chunk) => {
+      // Send streaming chunk to sidebar
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]) {
+          chrome.tabs.sendMessage(tabs[0].id, { type: 'STREAM_CHUNK', chunk });
+        }
+      });
+    });
+    return true; // Keep channel open for async
+  }
+  // ...other handlers...
+});
+

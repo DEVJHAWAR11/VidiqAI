@@ -28,6 +28,7 @@ function addMessage(text, sender = 'bot') {
   msg.textContent = text;
   chatContainer.appendChild(msg);
   chatContainer.scrollTop = chatContainer.scrollHeight;
+  return msg;
 }
 
 // Check transcript status
@@ -51,33 +52,34 @@ function checkTranscript() {
   );
 }
 
-// Handle chat form submit
+// Streaming chat submit handler
 chatForm.onsubmit = (e) => {
   e.preventDefault();
   const question = chatInput.value.trim();
   if (!question) return;
   addMessage(question, 'user');
   chatInput.value = '';
-  addMessage('Thinking...', 'bot');
+  // Add a new bot message for streaming
+  addMessage('', 'bot');
 
+  // Use streaming
   chrome.runtime.sendMessage(
-    { type: 'ASK_QUESTION', videoId, question },
-    (response) => {
-      // Remove "Thinking..." message
-      const lastMsg = chatContainer.querySelector('.message.bot:last-child');
-      if (lastMsg && lastMsg.textContent === 'Thinking...') {
-        lastMsg.remove();
-      }
-      if (response && response.success) {
-        addMessage(response.data.answer, 'bot');
-      } else {
-        addMessage('Sorry, something went wrong.', 'bot');
-      }
+    { type: 'ASK_QUESTION_STREAM', videoId, question },
+    () => {
+      // No callback needed for streaming
     }
   );
 };
 
-// On load
+// Listen for streaming chunks from background
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.type === 'STREAM_CHUNK') {
+    // Append chunk to last bot message
+    const lastBotMsg = chatContainer.querySelector('.message.bot:last-child');
+    if (lastBotMsg) lastBotMsg.textContent += msg.chunk;
+  }
+});
+
 window.onload = () => {
   videoId = getVideoIdFromParent();
   if (!videoId) {

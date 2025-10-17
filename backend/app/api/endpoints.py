@@ -241,3 +241,39 @@ def protected_route(api_key: str = Depends(verify_api_key)):
         return {"message": "You have access with a valid API key!"}
     else:
         return {"message": "You have access as a guest user."}
+
+
+from fastapi import Request
+from fastapi.responses import StreamingResponse
+from app.storage.vector_store import load_vectorstore_for_video
+import asyncio
+
+@router.post('/ask/stream')
+async def ask_question_stream(request: Request):
+    """
+    Stream LLM response for a question about a processed video.
+    """
+    data = await request.json()
+    video_id = data.get("video_id")
+    question = data.get("question")
+
+    if not video_id or not question:
+        return StreamingResponse(iter(["data: Error: Missing video_id or question\n\n"]), media_type="text/event-stream")
+
+    # Load vectorstore and create QA chain
+    vectorstore = load_vectorstore_for_video(video_id)
+    qa_chain = create_qa_chain(llm, vectorstore)
+
+    # Streaming generator
+    async def event_stream():
+        # Use LangChain streaming callback (pseudo-code, adapt to your LLM)
+        buffer = ""
+        for chunk in qa_chain.stream({"query": question}):  # .stream() must yield tokens/chunks
+            buffer += chunk
+            yield f"data: {chunk}\n\n"
+            await asyncio.sleep(0.01)  # Prevents blocking
+
+        # Optionally, send final message
+        yield f"data: [END]\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
+from app.api.auth import verify_api_key
 from app.models.schemas import (
     ProcessVideoRequest, ProcessVideoResponse,
     AskQuestionRequest, AskQuestionResponse,
@@ -142,3 +143,27 @@ def get_status():
         "version": "1.0.0",
         "endpoints": ["/health", "/process", "/ask", "/summary", "/status"]
     }
+    
+    
+from app.database.db import get_conversation_history, clear_session
+from fastapi import Depends
+
+@router.get('/history/{session_id}')
+def get_history(session_id: str, api_key: str = Depends(verify_api_key)):
+    return get_conversation_history(session_id)
+
+@router.delete('/history/{session_id}')
+def delete_history(session_id: str, api_key: str = Depends(verify_api_key)):
+    clear_session(session_id)
+    return {"message": f"History cleared for session {session_id}"}
+
+
+
+from fastapi import Depends
+
+@router.get("/protected")
+def protected_route(api_key: str = Depends(verify_api_key)):
+    if api_key:
+        return {"message": "You have access with a valid API key!"}
+    else:
+        return {"message": "You have access as a guest user."}

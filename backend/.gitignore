@@ -1,3 +1,14 @@
 venv/
 __pycache__/
 .env
+
+# Logs
+app.log
+*.log
+
+# Caches and outputs
+/data/*
+*.db
+
+# Whisper temp files and downloads
+~/.cache/whisper/*

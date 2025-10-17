@@ -26,6 +26,32 @@ def get_health():
     """Simple health check to ensure API is running"""
     return {"status": "ok", "message": "VidIQAI is running"}
 
+from app.storage.cache import load_transcript
+from app.services.transcripts import download_audio
+import os
+
+router = APIRouter()
+
+@router.get('/check/{video_id}')
+def check_transcript_status(video_id: str):
+    """
+    Check transcript status for a YouTube video.
+    Returns: {status: "available" | "fetching" | "unavailable"}
+    """
+    # Check if transcript is cached
+    transcript = load_transcript(video_id)
+    if transcript:
+        return {"status": "available"}
+
+    # Check if audio is being downloaded (optional: check for temp file)
+    audio_path = f"./data/audio/{video_id}.mp3"
+    if os.path.exists(audio_path):
+        return {"status": "fetching"}
+
+    # Otherwise, transcript is not available
+    return {"status": "unavailable"}
+
+
 # ============ VIDEO PROCESSING ============
 @router.post('/process', response_model=ProcessVideoResponse, status_code=status.HTTP_200_OK)
 def process_video_endpoint(request: ProcessVideoRequest):

@@ -1,58 +1,28 @@
-// chrome-extension/background/background.js
 
 // Configuration
 const CONFIG = {
-  API_BASE_URL: 'http://localhost:8000/api/v1',  // Change this when deployed
-  API_TIMEOUT: 30000  // 30 seconds
+  API_BASE_URL: 'http://localhost:8000/api/v1',
+  API_TIMEOUT: 30000
 };
 
-// Listen for installation
+// Installation handler
 chrome.runtime.onInstalled.addListener((details) => {
   console.log('✓ VidIQAI Extension Installed', details);
-  
-  // Set default settings
   chrome.storage.sync.set({
     apiUrl: CONFIG.API_BASE_URL,
-    theme: 'light',
+    theme: 'dark',
     autoProcess: true
   });
 });
 
-// Listen for messages from content scripts
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log('📩 Background received message:', request.type);
-  
-  // Handle different message types
-  switch(request.type) {
-    case 'CHECK_TRANSCRIPT':
-      checkTranscript(request.videoId)
-        .then(sendResponse)
-        .catch(err => sendResponse({ error: err.message }));
-      return true;  // Keep channel open for async response
-      
-    case 'PROCESS_VIDEO':
-      processVideo(request.videoId, request.videoUrl)
-        .then(sendResponse)
-        .catch(err => sendResponse({ error: err.message }));
-      return true;
-      
-    case 'ASK_QUESTION':
-      askQuestion(request.videoId, request.question)
-        .then(sendResponse)
-        .catch(err => sendResponse({ error: err.message }));
-      return true;
-      
-    case 'GET_SUMMARY':
-      getSummary(request.videoId)
-        .then(sendResponse)
-        .catch(err => sendResponse({ error: err.message }));
-      return true;
-  }
-});
-
-// API Functions
+// Check transcript function
 async function checkTranscript(videoId) {
   try {
+    // Validate video ID
+    if (!videoId || typeof videoId !== 'string') {
+      throw new Error('Invalid video ID');
+    }
+
     const settings = await chrome.storage.sync.get(['apiUrl']);
     const apiUrl = settings.apiUrl || CONFIG.API_BASE_URL;
     
@@ -77,200 +47,193 @@ async function checkTranscript(videoId) {
   }
 }
 
-async function processVideo(videoId, videoUrl) {
+// Streaming function with full validation
+async function askQuestionStream(videoId, question, onChunk, onError) {
   try {
-    const settings = await chrome.storage.sync.get(['apiUrl']);
-    const apiUrl = settings.apiUrl || CONFIG.API_BASE_URL;
-    
-    console.log(`🔄 Processing video: ${videoId}`);
-    
-    const response = await fetch(`${apiUrl}/process`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        video_url: videoUrl || `https://www.youtube.com/watch?v=${videoId}`
-      })
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || `API Error: ${response.status}`);
+    // CRITICAL: Validate video ID
+    if (!videoId || typeof videoId !== 'string') {
+      throw new Error('Invalid video ID');
     }
     
-    const data = await response.json();
-    console.log('✓ Video processed:', data);
-    return { success: true, data };
+    videoId = videoId.trim();
+    if (videoId.length === 0) {
+      throw new Error('Video ID is empty');
+    }
     
+    // CRITICAL: Validate question
+    if (!question || typeof question !== 'string') {
+      throw new Error('Invalid question');
+    }
+    
+    question = question.trim();
+    if (question.length === 0) {
+      throw new Error('Question is empty');
+    }
+    
+    // Ensure both are clean strings
+    videoId = String(videoId);
+    question = String(question);
+
+    const settings = await chrome.storage.sync.get(['apiUrl']);
+    const apiUrl = settings.apiUrl || CONFIG.API_BASE_URL;
+
+    console.log(`🔄 Starting stream for video ${videoId}`);
+    console.log(`📝 Question: "${question}"`);
+
+    const response = await fetch(`${apiUrl}/ask/stream`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'text/event-stream'
+      },
+      body: JSON.stringify({ 
+        video_id: videoId, 
+        question: question 
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    if (!response.body) {
+      throw new Error("No response body for streaming");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) {
+        console.log('✓ Stream completed');
+        break;
+      }
+
+      buffer += decoder.decode(value, { stream: true });
+
+      // Split on SSE event boundaries
+      const events = buffer.split("\n\n");
+      buffer = events.pop(); // Keep incomplete event in buffer
+
+      for (const event of events) {
+        if (event.startsWith("data: ")) {
+          const chunk = event.replace("data: ", "").trim();
+          
+          if (chunk === "[END]") {
+            console.log('✓ Stream ended normally');
+            return;
+          }
+          
+          if (chunk.length > 0) {
+            console.log('📦 Chunk received:', chunk.substring(0, 50) + (chunk.length > 50 ? '...' : ''));
+            onChunk(chunk);
+          }
+        }
+      }
+    }
   } catch (error) {
-    console.error('✗ Process video failed:', error);
-    return { success: false, error: error.message };
+    console.error('✗ Streaming error:', error);
+    onError(error.message);
   }
 }
 
-async function askQuestion(videoId, question) {
-  try {
-    const settings = await chrome.storage.sync.get(['apiUrl']);
-    const apiUrl = settings.apiUrl || CONFIG.API_BASE_URL;
+// Message listener
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log('📩 Background received message:', request.type);
+  
+  // Handle transcript check
+  if (request.type === 'CHECK_TRANSCRIPT') {
+    const videoId = request.videoId;
     
-    console.log(`💬 Asking: "${question}"`);
-    
-    const response = await fetch(`${apiUrl}/ask`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        video_id: videoId,
-        question: question
-      })
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || `API Error: ${response.status}`);
+    if (!videoId) {
+      sendResponse({ success: false, error: 'No video ID provided' });
+      return true;
     }
     
-    const data = await response.json();
-    console.log('✓ Got answer:', data);
-    return { success: true, data };
+    checkTranscript(videoId)
+      .then(sendResponse)
+      .catch(err => sendResponse({ success: false, error: err.message }));
     
-  } catch (error) {
-    console.error('✗ Ask question failed:', error);
-    return { success: false, error: error.message };
+    return true; // Keep channel open for async response
   }
-}
-
-async function getSummary(videoId) {
-  try {
-    const settings = await chrome.storage.sync.get(['apiUrl']);
-    const apiUrl = settings.apiUrl || CONFIG.API_BASE_URL;
+  
+  // Handle streaming question
+  if (request.type === 'ASK_QUESTION_STREAM') {
+    const videoId = request.videoId;
+    const question = request.question;
     
-    console.log(`📝 Getting summary for: ${videoId}`);
-    
-    const response = await fetch(`${apiUrl}/summary`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        video_id: videoId
-      })
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || `API Error: ${response.status}`);
+    // Validate inputs
+    if (!videoId) {
+      console.error('No video ID provided');
+      return true;
     }
     
-    const data = await response.json();
-    console.log('✓ Got summary:', data);
-    return { success: true, data };
+    if (!question) {
+      console.error('No question provided');
+      return true;
+    }
     
-  } catch (error) {
-    console.error('✗ Get summary failed:', error);
-    return { success: false, error: error.message };
+    // Start streaming with validation
+    askQuestionStream(
+      videoId,
+      question,
+      (chunk) => {
+        // Send chunk to content script (which forwards to sidebar)
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs && tabs[0]) {
+            chrome.tabs.sendMessage(tabs[0].id, { 
+              type: 'STREAM_CHUNK', 
+              chunk: chunk 
+            }).catch(err => {
+              console.error('Error sending chunk to tab:', err);
+            });
+          }
+        });
+      },
+      (error) => {
+        // Send error to content script
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs && tabs[0]) {
+            chrome.tabs.sendMessage(tabs[0].id, { 
+              type: 'STREAM_ERROR', 
+              error: error 
+            }).catch(err => {
+              console.error('Error sending error to tab:', err);
+            });
+          }
+        });
+      }
+    );
+    
+    return true; // Keep channel open
   }
-}
+  
+  // Unknown message type
+  console.warn('Unknown message type:', request.type);
+  return false;
+});
 
-// Keep service worker alive
+// Connection listener
 chrome.runtime.onConnect.addListener((port) => {
   console.log('🔌 Port connected:', port.name);
+  
+  port.onDisconnect.addListener(() => {
+    console.log('🔌 Port disconnected:', port.name);
+  });
 });
 
+// Startup log
 console.log('🚀 VidIQAI Background Service Worker Started');
+console.log('🌐 API Base URL:', CONFIG.API_BASE_URL);
 
-
-
-// for chat streaming
-
-async function askQuestionStream(videoId, question, onChunk) {
-  const settings = await chrome.storage.sync.get(['apiUrl']);
-  const apiUrl = settings.apiUrl || CONFIG.API_BASE_URL;
-
-  const response = await fetch(`${apiUrl}/ask/stream`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ video_id: videoId, question })
-  });
-
-  if (!response.body) throw new Error("No response body for streaming");
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let done = false;
-  let buffer = "";
-
-  while (!done) {
-    const { value, done: doneReading } = await reader.read();
-    done = doneReading;
-    buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
-
-    // Split on SSE event boundaries
-    const events = buffer.split("\n\n");
-    buffer = events.pop(); // Last incomplete event stays in buffer
-
-    for (const event of events) {
-      if (event.startsWith("data: ")) {
-        const chunk = event.replace("data: ", "");
-        if (chunk === "[END]") return;
-        onChunk(chunk);
-      }
-    }
-  }
-}
-
-// Add this function to background/background.js
-async function askQuestionStream(videoId, question, onChunk) {
-  const settings = await chrome.storage.sync.get(['apiUrl']);
-  const apiUrl = settings.apiUrl || 'http://localhost:8000/api/v1';
-
-  const response = await fetch(`${apiUrl}/ask/stream`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ video_id: videoId, question })
-  });
-
-  if (!response.body) throw new Error("No response body for streaming");
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let done = false;
-  let buffer = "";
-
-  while (!done) {
-    const { value, done: doneReading } = await reader.read();
-    done = doneReading;
-    buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
-
-    // Split on SSE event boundaries
-    const events = buffer.split("\n\n");
-    buffer = events.pop(); // Last incomplete event stays in buffer
-
-    for (const event of events) {
-      if (event.startsWith("data: ")) {
-        const chunk = event.replace("data: ", "");
-        if (chunk === "[END]") return;
-        onChunk(chunk);
-      }
-    }
-  }
-}
-
-// Update your message handler in background/background.js
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.type === 'ASK_QUESTION_STREAM') {
-    askQuestionStream(request.videoId, request.question, (chunk) => {
-      // Send streaming chunk to sidebar
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (tabs[0]) {
-          chrome.tabs.sendMessage(tabs[0].id, { type: 'STREAM_CHUNK', chunk });
-        }
-      });
-    });
-    return true; // Keep channel open for async
-  }
-  // ...other handlers...
+// Handle service worker lifecycle
+self.addEventListener('activate', (event) => {
+  console.log('✓ Service Worker activated');
 });
 
+self.addEventListener('install', (event) => {
+  console.log('✓ Service Worker installed');
+  self.skipWaiting();
+});

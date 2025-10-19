@@ -1,16 +1,13 @@
 // chrome-extension/content/content.js
 
-// Utility to get YouTube video ID from URL
 function getYouTubeVideoId() {
   const url = new URL(window.location.href);
   return url.searchParams.get('v');
 }
 
-// Inject sidebar if not already present
 function injectSidebar() {
   if (document.getElementById('vidiqai-sidebar')) return;
 
-  // Create iframe for sidebar
   const sidebar = document.createElement('iframe');
   sidebar.id = 'vidiqai-sidebar';
   sidebar.src = chrome.runtime.getURL('sidebar/sidebar.html');
@@ -26,15 +23,20 @@ function injectSidebar() {
   sidebar.style.transition = 'right 0.3s';
 
   document.body.appendChild(sidebar);
+
+  sidebar.onload = () => {
+    const videoId = getYouTubeVideoId();
+    if (videoId) {
+      sidebar.contentWindow.postMessage({ videoId }, '*');
+    }
+  };
 }
 
-// Remove sidebar
 function removeSidebar() {
   const sidebar = document.getElementById('vidiqai-sidebar');
   if (sidebar) sidebar.remove();
 }
 
-// Add a floating button to open/close sidebar
 function injectSidebarButton() {
   if (document.getElementById('vidiqai-sidebar-btn')) return;
 
@@ -53,6 +55,19 @@ function injectSidebarButton() {
   btn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
   btn.style.cursor = 'pointer';
   btn.style.fontSize = '16px';
+  btn.style.fontWeight = '600';
+  btn.style.transition = 'all 0.2s';
+
+  btn.onmouseover = () => {
+    btn.style.background = '#4f46e5';
+    btn.style.transform = 'translateY(-2px)';
+    btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+  };
+  btn.onmouseout = () => {
+    btn.style.background = '#6366f1';
+    btn.style.transform = 'translateY(0)';
+    btn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+  };
 
   btn.onclick = () => {
     const sidebar = document.getElementById('vidiqai-sidebar');
@@ -66,7 +81,6 @@ function injectSidebarButton() {
   document.body.appendChild(btn);
 }
 
-// Listen for YouTube navigation (SPA)
 let lastVideoId = null;
 function checkForVideoChange() {
   const currentVideoId = getYouTubeVideoId();
@@ -77,11 +91,9 @@ function checkForVideoChange() {
   }
 }
 
-// Initial injection
 injectSidebarButton();
 checkForVideoChange();
 
-// Observe URL changes (YouTube SPA navigation)
 let lastUrl = location.href;
 new MutationObserver(() => {
   if (location.href !== lastUrl) {
@@ -89,3 +101,22 @@ new MutationObserver(() => {
     setTimeout(checkForVideoChange, 500);
   }
 }).observe(document, {subtree: true, childList: true});
+
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  const iframe = document.getElementById('vidiqai-sidebar');
+  if (iframe && iframe.contentWindow) {
+    iframe.contentWindow.postMessage(msg, '*');
+  }
+});
+
+window.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'CLOSE_SIDEBAR') {
+    removeSidebar();
+  }
+});
+
+window.addEventListener('message', (event) => {
+  if (event.data?.type === 'CLOSE_SIDEBAR') {
+    removeSidebar();
+  }
+});

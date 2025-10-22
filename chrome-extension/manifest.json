@@ -3,7 +3,7 @@
   "name": "Klypse - AI YouTube Assistant",
   "version": "1.0.0",
   "description": "AI-powered chat assistant for YouTube videos. Ask questions and get instant answers.",
-  "author": "Your Name",
+  "author": "Dev Jhawar",
   
   "permissions": [
     "activeTab",

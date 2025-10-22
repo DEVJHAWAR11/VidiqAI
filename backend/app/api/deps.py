@@ -1,5 +1,4 @@
 from langchain_groq import ChatGroq
-from langchain_openai import ChatOpenAI
 from app.config import config
 from app.storage.vector_store import get_vectorstore
 from app.services.qa_chain import create_qa_chain
@@ -17,12 +16,6 @@ def get_llm():
                 "frequency_penalty": 0.5,  # Penalize repeated tokens
                 "presence_penalty": 0.3     # Encourage diverse vocabulary
             }
-        )
-    else:  # openai
-        return ChatOpenAI(
-            openai_api_key=config.OPENAI_API_KEY,
-            model_name=config.OPENAI_MODEL,
-            temperature=0
         )
 
 # Initialize once when app starts

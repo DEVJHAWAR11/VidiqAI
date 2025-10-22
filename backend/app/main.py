@@ -5,7 +5,7 @@ from app.api import endpoints
 from app.config import config
 
 app = FastAPI(
-    title="VidIQAI API",
+    title="KLYPSE API",
     description="YouTube Video Q&A with AI",
     version="1.0.0"
 )

@@ -1,43 +1,30 @@
-# ===================================
-# Klypse - YouTube Chatbot Backend
-# Python 3.10+ Windows Compatible
-# Tested: October 2025
-# ===================================
+# FastAPI
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
 
-# FastAPI Framework
-fastapi>=0.115.0
-uvicorn[standard]>=0.31.0
-python-multipart>=0.0.17
+# YouTube
+youtube-transcript-api==0.6.2
+yt-dlp==2024.3.10
 
-# Configuration Management
-python-dotenv>=1.0.1
-pydantic>=2.9.2
-pydantic-settings>=2.6.0
+# AI/LLM - Compatible versions
+groq==0.4.2
+langchain==0.1.16
+langchain-groq==0.0.1
+langchain-community==0.0.36
+langchain-huggingface==0.0.1
+openai==1.12.0
 
-# LangChain Core (v0.3 - Latest Stable)
-langchain>=0.3.0,<0.4.0
-langchain-core>=0.3.17,<0.4.0
-langchain-community>=0.3.0,<0.4.0
+# Embeddings & Vector Store - Updated version
+faiss-cpu==1.7.4
+sentence-transformers>=2.6.0
+chromadb==0.4.22
 
-# OpenAI Integration
-langchain-openai>=0.2.0,<0.3.0
-openai>=1.54.0
-tiktoken>=0.8.0
+# Audio Processing
+openai-whisper==20231117
 
-# Vector Database - FAISS (Windows-friendly, no C++ compiler needed!)
-faiss-cpu>=1.8.0
-
-# YouTube Transcript Fetching
-youtube-transcript-api>=0.6.2
-
-# Additional utilities (optional but recommended)
-requests>=2.32.0
-typing-extensions>=4.12.0
-
-langchain-groq>=0.2.0
-sentence-transformers>=2.7.0
-
-# Audio transcription (for videos without transcripts)
-groq>=0.4.0
-yt-dlp>=2024.10.0
-
+# Utils
+pydantic==2.6.0
+pydantic-settings==2.1.0
+python-dotenv==1.0.0
+requests==2.31.0

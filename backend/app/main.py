@@ -1,32 +1,35 @@
+# app/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import endpoints
+from app.config import config
 
 app = FastAPI(
-    title='VidIQAI',
-    description='YouTube Video Chatbot API with RAG',
-    version='1.0.0'
+    title="VidIQAI API",
+    description="YouTube Video Q&A with AI",
+    version="1.0.0"
 )
 
-# CORS - This is BACKEND code, not UI!
-# It tells FastAPI to accept requests from browsers (future Chrome extension)
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins (restrict in production)
+    allow_origins=[
+        "chrome-extension://*",
+        "http://localhost:*",
+        "https://www.youtube.com",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Register your API routes
-app.include_router(endpoints.router, prefix="/api/v1", tags=["VidIQAI"])
+# Include API routes
+app.include_router(endpoints.router, prefix="/api/v1", tags=["videos"])
 
 @app.get("/")
-def read_root():
-    return {
-        "message": "VidIQAI API is running",
-        "docs": "/docs",
-        "version": "1.0.0"
-    }
+def root():
+    return {"message": "VidIQAI API", "version": "1.0.0"}
 
-
+@app.get("/health")
+def health():
+    return {"status": "healthy"}

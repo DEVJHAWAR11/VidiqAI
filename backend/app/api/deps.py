@@ -10,7 +10,13 @@ def get_llm():
         return ChatGroq(
             groq_api_key=config.GROQ_API_KEY,
             model_name=config.GROQ_MODEL,
-            temperature=0
+            temperature=0.3,  # Lower temperature for more focused responses
+            max_tokens=1024,
+            model_kwargs={
+                "top_p": 0.9,
+                "frequency_penalty": 0.5,  # Penalize repeated tokens
+                "presence_penalty": 0.3     # Encourage diverse vocabulary
+            }
         )
     else:  # openai
         return ChatOpenAI(

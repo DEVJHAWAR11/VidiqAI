@@ -28,7 +28,7 @@ app.include_router(endpoints.router, prefix="/api/v1", tags=["videos"])
 
 @app.get("/")
 def root():
-    return {"message": "VidIQAI API", "version": "1.0.0"}
+    return {"message": "Klypse API", "version": "1.0.0"}
 
 @app.get("/health")
 def health():

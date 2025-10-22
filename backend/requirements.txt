@@ -1,5 +1,5 @@
 # ===================================
-# VidIQAI - YouTube Chatbot Backend
+# Klypse - YouTube Chatbot Backend
 # Python 3.10+ Windows Compatible
 # Tested: October 2025
 # ===================================

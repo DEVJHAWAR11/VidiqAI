@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "VidIQAI - YouTube Video Chatbot",
+  "name": "Klypse - AI YouTube Assistant",
   "version": "1.0.0",
-  "description": "Chat with any YouTube video using AI. Ask questions, get summaries, and understand content better.",
+  "description": "AI-powered chat assistant for YouTube videos. Ask questions and get instant answers.",
   "author": "Your Name",
   
   "permissions": [
@@ -13,8 +13,7 @@
   
   "host_permissions": [
     "https://www.youtube.com/*",
-    "http://localhost:8000/*",
-    "https://your-backend-url.com/*"
+    "http://localhost:8000/*"
   ],
   
   "icons": {
@@ -32,18 +31,12 @@
       "matches": ["https://www.youtube.com/watch*"],
       "js": ["content/content.js"],
       "css": ["content/content.css"],
-      "run_at": "document_idle"
+      "run_at": "document_end"
     }
   ],
   
   "action": {
-    "default_popup": "popup/popup.html",
-    "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
-    },
-    "default_title": "VidIQAI Chatbot"
+    "default_title": "Klypse AI Assistant"
   },
   
   "web_accessible_resources": [

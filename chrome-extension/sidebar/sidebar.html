@@ -1,25 +1,93 @@
-<!-- chrome-extension/sidebar/sidebar.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>VidIQAI Chatbot</title>
-  <link rel="stylesheet" href="sidebar.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vidora</title>
+    <link rel="stylesheet" href="sidebar.css">
 </head>
 <body>
-  <div id="sidebar-root">
-    <header>
-      <img src="../icons/icon48.png" alt="VidIQAI" class="logo"/>
-      <span class="title">VidIQAI Chatbot</span>
-    </header>
-    <div id="transcript-status" class="status">Checking transcript...</div>
-    <div id="chat-container"></div>
-    <form id="chat-form">
-      <input type="text" id="chat-input" placeholder="Ask about this video..." autocomplete="off" required />
-      <button type="submit">Send</button>
-    </form>
-  </div>
-  <script src="sidebar.js"></script>
+    <div class="sidebar-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                            <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/>
+                        </svg>
+                    </div>
+                    <span>Klypse</span>
+                </div>
+
+                <div class="header-actions">
+                    <button class="icon-btn" id="clear-btn" title="Clear chat">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </button>
+                    <button class="icon-btn" id="close-btn" title="Close sidebar">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-content">
+                <div class="status-indicator"></div>
+                <span id="transcript-status">Ready to chat</span>
+            </div>
+            <div class="progress-bar" id="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+        </div>
+
+        <!-- Suggestion Chips -->
+        <div class="suggestions" id="suggestions">
+            <div class="suggestion-chip">Summarize this video</div>
+            <div class="suggestion-chip">Key takeaways</div>
+            <div class="suggestion-chip">Main topics</div>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="chat-container" id="chat-container">
+            <div class="empty-state" id="empty-state">
+                <div class="empty-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                </div>
+                <h3>Start Chatting</h3>
+                <p>Ask questions about the video content and get instant AI-powered answers</p>
+            </div>
+        </div>
+
+        <!-- Chat Input -->
+        <form class="chat-form" id="chat-form">
+            <div class="input-wrapper">
+                <input 
+                    type="text" 
+                    id="chat-input" 
+                    placeholder="Ask anything about this video..."
+                    autocomplete="off"
+                    required
+                />
+                <button type="submit" class="send-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script src="sidebar.js"></script>
 </body>
 </html>

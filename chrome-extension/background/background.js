@@ -1,18 +1,17 @@
-
 // Configuration
 const CONFIG = {
-  API_BASE_URL: 'http://localhost:8000/api/v1',
-  API_TIMEOUT: 30000
+    API_BASE_URL: 'http://localhost:8000/api/v1',
+    API_TIMEOUT: 30000
 };
 
 // Installation handler
 chrome.runtime.onInstalled.addListener((details) => {
-  console.log('✓ VidIQAI Extension Installed', details);
-  chrome.storage.sync.set({
-    apiUrl: CONFIG.API_BASE_URL,
-    theme: 'dark',
-    autoProcess: true
-  });
+    console.log('✓ Vidora Extension Installed', details);
+    chrome.storage.sync.set({
+        apiUrl: CONFIG.API_BASE_URL,
+        theme: 'dark',
+        autoProcess: true
+    });
 });
 
 // Check transcript function

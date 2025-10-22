@@ -28,6 +28,7 @@ def download_audio(video_url: str, output_dir: str = "./data/audio") -> str:
         'quiet': True,
         'no_warnings': True,
     }
+    
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(video_url, download=True)
         audio_path = os.path.join(output_dir, f"{info['id']}.mp3")
@@ -46,8 +47,6 @@ def transcribe_with_groq(audio_path: str) -> str:
     logger.info("✓ Groq transcription complete")
     return transcription
 
-import whisper
-
 def transcribe_with_local_whisper(audio_path, model_size="base"):
     model = whisper.load_model(model_size)
     # Force English translation for non-English audio
@@ -61,36 +60,47 @@ def get_transcript(video_id: str, video_url: str = None):
     if cached:
         logger.info(f"✓ Using cached transcript for: {video_id}")
         return cached
-
+    
     # Step 2: Try all likely transcript languages
     languages = [
         'en', 'hi', 'es', 'fr', 'de', 'ru', 'ar', 'bn', 'id', 'auto'
     ]
+    
     for lang in languages:
         try:
             logger.info(f"Trying transcript for language: {lang}")
-            transcript_data = YouTubeTranscriptApi.get_transcript(video_id, languages=[lang])
+            transcript_data = YouTubeTranscriptApi().fetch(video_id, languages=[lang])
+            transcript_data = transcript_data.to_raw_data()
             transcript_text = " ".join([entry['text'] for entry in transcript_data])
+            
+            # FIXED: Clean transcript immediately after fetching
+            transcript_text = clean_text(transcript_text)
+            
             save_transcript(video_id, transcript_text)
             logger.info(f"✓ Got transcript ({lang}, {len(transcript_text)} chars)")
             return transcript_text
+        
         except _errors.NoTranscriptFound as e:
             logger.info(f"✗ No transcript in {lang}: {str(e)}")
         except Exception as e:
             logger.info(f"✗ Other error for lang {lang}: {str(e)}")
-        continue
-
+            continue
+    
     # Step 3: Groq fallback for short videos only (<25MB audio)
     logger.info("No transcript found for any language. Trying Groq Whisper API...")
     try:
         if not video_url:
             video_url = f"https://www.youtube.com/watch?v={video_id}"
+        
         audio_path = download_audio(video_url)
         file_size_mb = os.path.getsize(audio_path) / (1024 * 1024)
         logger.info(f"Audio file size: {file_size_mb:.2f} MB")
+        
         if file_size_mb <= 24:
             try:
                 grq_txt = transcribe_with_groq(audio_path)
+                # FIXED: Clean after Groq transcription
+                grq_txt = clean_text(grq_txt)
                 save_transcript(video_id, grq_txt)
                 os.remove(audio_path)
                 return grq_txt
@@ -98,13 +108,15 @@ def get_transcript(video_id: str, video_url: str = None):
                 logger.warning(f"Groq failed: {str(groq_error)}")
         else:
             logger.warning("Audio file too large for Groq fallback; trying local Whisper")
-
+        
         # Step 4: Local Whisper fallback (any file size)
         w_txt = transcribe_with_local_whisper(audio_path)
+        # FIXED: Clean after Whisper transcription
+        w_txt = clean_text(w_txt)
         save_transcript(video_id, w_txt)
         os.remove(audio_path)
         return w_txt
-
+        
     except Exception as whisper_error:
         logger.error(f"All approaches failed: {str(whisper_error)}")
         raise TranscriptError(
@@ -112,20 +124,12 @@ def get_transcript(video_id: str, video_url: str = None):
             "This may be a platform restriction or severe audio download error. Contact admin if this is unexpected."
         )
 
-# In transcripts.py, modify the process_video function:
-
-# In transcripts.py, modify the process_video function:
-
 def process_video(video_id: str, video_url: str = None) -> dict:
     logger.info(f"Starting video processing for: {video_id}")
-    
     transcript = get_transcript(video_id, video_url)
     cleaned = clean_text(transcript)
     chunks = chunk_text(cleaned, chunk_size=500)
-    
-    # FIXED: Pass video_id to store in video-specific index
     add_to_vectorstore(chunks, video_id=video_id)
-    
     logger.info(f"✓ Processed {len(chunks)} chunks into video-specific vector store")
     
     return {
@@ -135,4 +139,3 @@ def process_video(video_id: str, video_url: str = None) -> dict:
         "chunks_created": len(chunks),
         "status": "success"
     }
-

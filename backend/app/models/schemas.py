@@ -1,6 +1,9 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 import re
+class AskRequest(BaseModel):
+    video_id: str
+    question: str
 
 class ProcessVideoRequest(BaseModel):
     """Request model for processing a video"""

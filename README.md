@@ -38,5 +38,3 @@ It combines **FastAPI**, **LangChain**, **Groq LLM**, and **Whisper** to process
 - youtube-transcript-api  
 - yt-dlp  
 
-git clone https://github.com/your-username/klypse.git
-cd klypse

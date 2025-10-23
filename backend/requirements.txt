@@ -16,7 +16,7 @@ langchain-huggingface==0.0.1
 openai==1.12.0
 
 # Embeddings & Vector Store - Updated version
-faiss-cpu==1.7.4
+faiss-cpu
 sentence-transformers>=2.6.0
 chromadb==0.4.22
 

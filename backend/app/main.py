@@ -13,18 +13,14 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "chrome-extension://*",
-        "http://localhost:*",
-        "https://www.youtube.com",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Include API routes
-app.include_router(endpoints.router, prefix="/api/v1", tags=["videos"])
+app.include_router(endpoints.router)
 
 @app.get("/")
 def root():

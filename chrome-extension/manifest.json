@@ -8,12 +8,14 @@
   "permissions": [
     "activeTab",
     "storage",
-    "tabs"
+    "tabs",
+    "scripting"
   ],
   
   "host_permissions": [
     "https://www.youtube.com/*",
-    "http://localhost:8000/*"
+    "https://devjhawar-klypse.hf.space/*",
+    "https://*.googlevideo.com/*"
   ],
   
   "icons": {

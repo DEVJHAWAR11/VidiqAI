@@ -1,6 +1,6 @@
 // Configuration
 const CONFIG = {
-    API_BASE_URL: 'http://localhost:8000/api/v1',
+    API_BASE_URL: 'https://devjhawar-klypse.hf.space',
     API_TIMEOUT: 30000
 };
 

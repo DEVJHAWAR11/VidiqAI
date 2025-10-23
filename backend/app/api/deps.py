@@ -10,7 +10,7 @@ def get_llm():
             groq_api_key=config.GROQ_API_KEY,
             model_name=config.GROQ_MODEL,
             temperature=0.3,  # Lower temperature for more focused responses
-            max_tokens=1024,
+            max_tokens=1024
         )
 
 # Initialize once when app starts

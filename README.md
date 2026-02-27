@@ -10,9 +10,13 @@
 
 ---
 
-## 📺 Demo
+## 🔗 Links
 
-**[Watch Full Workflow Demo ▶](https://youtu.be/XX2n9f3PlNs)** — Live Q&A, AWS EC2 deployment, YouTube IP restriction diagnosis, and local fallback validation.
+| | |
+|---|---|
+| 🌐 **Live Landing Page** | [klypse-ai-youtube-extension-bot.netlify.app](https://klypse-ai-youtube-extension-bot.netlify.app/) |
+| 📺 **Full Demo Video** | [Watch on YouTube](https://youtu.be/XX2n9f3PlNs) |
+| 📦 **GitHub Repo** | [DEVJHAWAR11/VidiqAI](https://github.com/DEVJHAWAR11/VidiqAI) |
 
 ---
 
@@ -56,7 +60,7 @@ Transcript Pipeline (4-tier fallback)
 | Retrieval | FAISS + MMR (per-video, disk-persisted) |
 | Transcription | YouTubeTranscriptApi + Groq Whisper + Local Whisper |
 | Audio Download | yt-dlp + ffmpeg |
-| Frontend | Chrome Extension (JavaScript) |
+| Frontend | Chrome Extension (JavaScript) + Netlify Landing Page |
 | Containerization | Docker + docker-compose |
 | Cloud | AWS EC2 (with documented IP restriction workaround) |
 

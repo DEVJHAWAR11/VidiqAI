@@ -7,7 +7,20 @@ import logging
 logger = logging.getLogger(__name__)
 
 def create_qa_chain(llm, vectorstore):
-    # ENHANCED: Better prompt to prevent repetition
+    """
+    Creates a LangChain RetrievalQA chain over a per-video FAISS vectorstore.
+
+    Retrieval Strategy:
+        - search_type: 'mmr' (Maximum Marginal Relevance)
+          Ensures retrieved chunks are both relevant AND diverse,
+          avoiding redundant context when multiple similar segments exist.
+        - k=3: Return top 3 chunks for answer generation
+        - fetch_k=10: Fetch 10 candidates before MMR re-ranking
+
+    Prompt:
+        Custom prompt enforces grounded, non-repetitive answers
+        anchored strictly to the video transcript context.
+    """
     prompt_template = """You are an AI assistant analyzing a YouTube video transcript. Use the context below to answer the question accurately and concisely.
 
 Context from video transcript:
@@ -24,19 +37,20 @@ IMPORTANT INSTRUCTIONS:
 6. Do NOT duplicate or repeat sentences
 
 Your Answer:"""
-    
+
     PROMPT = PromptTemplate(
         template=prompt_template,
         input_variables=["context", "question"]
     )
-    
+
     return RetrievalQA.from_chain_type(
         llm=llm,
         chain_type="stuff",
         retriever=vectorstore.as_retriever(
+            search_type="mmr",       # Maximum Marginal Relevance for diverse retrieval
             search_kwargs={
-                "k": 3,  # Retrieve top 3 most relevant chunks
-                "fetch_k": 10  # Fetch more candidates for better filtering
+                "k": 3,              # Return top 3 most relevant + diverse chunks
+                "fetch_k": 10        # Fetch 10 candidates, MMR re-ranks to top 3
             }
         ),
         return_source_documents=False,

@@ -8,15 +8,7 @@
 [![Docker](https://img.shields.io/badge/Docker-ready-blue)](https://docker.com)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
----
-
-## 🔗 Links
-
-| | |
-|---|---|
-| 🌐 **Live Landing Page** | [klypse-ai-youtube-extension-bot.netlify.app](https://klypse-ai-youtube-extension-bot.netlify.app/) |
-| 📺 **Full Demo Video** | [Watch on YouTube](https://youtu.be/XX2n9f3PlNs) |
-| 📦 **GitHub Repo** | [DEVJHAWAR11/VidiqAI](https://github.com/DEVJHAWAR11/VidiqAI) |
+> 🌐 **Live Demo:** [klypse-ai-youtube-extension-bot.netlify.app](https://klypse-ai-youtube-extension-bot.netlify.app/)
 
 ---
 
@@ -81,7 +73,7 @@ Each video gets its own FAISS index at `./data/faiss/{video_id}/` — zero cross
 Uses Maximum Marginal Relevance instead of plain similarity search — retrieves chunks that are both **relevant** and **diverse**, preventing redundant context from similar transcript segments.
 
 ### 4. AWS IP Restriction — Diagnosed & Documented
-YouTube blocks requests from AWS cloud IPs. Issue was diagnosed via yt-dlp verbose logs (HTTP 403 from AWS-origin), confirmed by comparing EC2 vs local curl responses, resolved via local-fallback strategy, and proven via [recorded demo](https://youtu.be/XX2n9f3PlNs).
+YouTube blocks requests from AWS cloud IPs. Issue was diagnosed via yt-dlp verbose logs (HTTP 403 from AWS-origin), confirmed by comparing EC2 vs local curl responses, resolved via local-fallback strategy, and proven via live demo on the landing page.
 
 ### 5. SSE Streaming with Deduplication
 Answers stream word-by-word via `StreamingResponse` with `text/event-stream`. Post-processing deduplication handles repetition artifacts from streamed LLM outputs.
@@ -165,7 +157,7 @@ docker-compose up --build
 
 | Constraint | Details |
 |---|---|
-| AWS IP blocking | YouTube blocks requests from AWS-hosted servers. Full diagnosis + demo in [video](https://youtu.be/XX2n9f3PlNs). |
+| AWS IP blocking | YouTube blocks requests from AWS-hosted servers. Full diagnosis documented; working demo on [landing page](https://klypse-ai-youtube-extension-bot.netlify.app/). |
 | Groq Whisper limit | Audio files > 24MB fall back to local Whisper automatically. |
 | Local Whisper speed | Base model ~30–60s for long videos on CPU. |
 
